@@ -1,0 +1,67 @@
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import LabelEncoder
+
+
+class DataTransformation(BaseEstimator, TransformerMixin):
+
+    def __init__(self):
+        self.label_encoders = {}
+        self.columns = []
+
+    def fit(self, X, y=None):
+
+        X = X.copy()
+
+        # Remove ROW_ID if exists
+        if "ROW_ID" in X.columns:
+            X = X.drop(columns=["ROW_ID"])
+
+        # Remove Date columns
+        date_cols = [col for col in X.columns if "DATE" in col.upper()]
+
+        X = X.drop(columns=date_cols, errors="ignore")
+
+        self.columns = X.columns
+
+        # Fit label encoders
+        for col in self.columns:
+            le = LabelEncoder()
+
+            X[col] = X[col].astype(str)
+
+            le.fit(X[col])
+
+            self.label_encoders[col] = le
+
+        return self
+
+    def transform(self, X):
+
+        X = X.copy()
+
+        # Drop ROW_ID
+        if "ROW_ID" in X.columns:
+            X = X.drop(columns=["ROW_ID"])
+
+        # Drop date columns
+        date_cols = [col for col in X.columns if "DATE" in col.upper()]
+        X = X.drop(columns=date_cols, errors="ignore")
+
+        # Apply label encoding
+        for col in self.columns:
+
+            X[col] = X[col].astype(str)
+
+            if col in self.label_encoders:
+                le = self.label_encoders[col]
+
+                # Handle unseen values
+                X[col] = X[col].apply(lambda x: x if x in le.classes_ else "UNKNOWN")
+
+                if "UNKNOWN" not in le.classes_:
+                    le.classes_ = list(le.classes_) + ["UNKNOWN"]
+
+                X[col] = le.transform(X[col])
+
+        return X
