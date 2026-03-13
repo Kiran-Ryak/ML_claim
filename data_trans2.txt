@@ -1,0 +1,57 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+class DataTransformation(BaseEstimator, TransformerMixin):
+
+    def __init__(self):
+
+        # Columns to remove
+        self.drop_columns = [
+            "ROW_ID",
+            "CDML_FROM_DT",
+            "CDML_TO_DT"
+        ]
+
+        self.label_encoders = {}
+
+    def fit(self, X, y=None):
+
+        X = X.copy()
+
+        # Drop unwanted columns
+        X = X.drop(columns=self.drop_columns, errors="ignore")
+
+        # Fit label encoders for all remaining columns
+        for col in X.columns:
+
+            le = LabelEncoder()
+
+            X[col] = X[col].astype(str)
+
+            le.fit(X[col])
+
+            self.label_encoders[col] = le
+
+        return self
+
+    def transform(self, X):
+
+        X = X.copy()
+
+        # Drop unwanted columns
+        X = X.drop(columns=self.drop_columns, errors="ignore")
+
+        # Apply label encoding
+        for col in X.columns:
+
+            if col in self.label_encoders:
+
+                le = self.label_encoders[col]
+
+                X[col] = X[col].astype(str)
+
+                X[col] = le.transform(X[col])
+
+        return X
