@@ -1,0 +1,53 @@
+---------------------------------------------------------------------------
+KeyError                                  Traceback (most recent call last)
+Cell In[84], line 33
+     25 plot_pairs = [
+     26     ("CDML_CHG_AMT", axes[0, 0]),
+     27     ("DISALL_AMT_OVR", axes[0, 1]),
+     28     ("Length_Of_Stay", axes[1, 0]),
+     29     ("CDML_UNITS", axes[1, 1]),
+     30 ]
+     32 for col, ax in plot_pairs:
+---> 33     for outcome, grp in df.groupby("Outcome"):
+     34         series = pd.to_numeric(grp[col], errors="coerce").dropna()
+     35         if len(series) == 0:
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\frame.py:9183, in DataFrame.groupby(self, by, axis, level, as_index, sort, group_keys, observed, dropna)
+   9180 if level is None and by is None:
+   9181     raise TypeError("You have to supply one of 'by' and 'level'")
+-> 9183 return DataFrameGroupBy(
+   9184     obj=self,
+   9185     keys=by,
+   9186     axis=axis,
+   9187     level=level,
+   9188     as_index=as_index,
+   9189     sort=sort,
+   9190     group_keys=group_keys,
+   9191     observed=observed,
+   9192     dropna=dropna,
+   9193 )
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\groupby\groupby.py:1329, in GroupBy.__init__(self, obj, keys, axis, level, grouper, exclusions, selection, as_index, sort, group_keys, observed, dropna)
+   1326 self.dropna = dropna
+   1328 if grouper is None:
+-> 1329     grouper, exclusions, obj = get_grouper(
+   1330         obj,
+   1331         keys,
+   1332         axis=axis,
+   1333         level=level,
+   1334         sort=sort,
+   1335         observed=False if observed is lib.no_default else observed,
+   1336         dropna=self.dropna,
+   1337     )
+   1339 if observed is lib.no_default:
+   1340     if any(ping._passed_categorical for ping in grouper.groupings):
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\groupby\grouper.py:1043, in get_grouper(obj, key, axis, level, sort, observed, validate, dropna)
+   1041         in_axis, level, gpr = False, gpr, None
+   1042     else:
+-> 1043         raise KeyError(gpr)
+   1044 elif isinstance(gpr, Grouper) and gpr.key is not None:
+   1045     # Add key to exclusions
+   1046     exclusions.add(gpr.key)
+
+KeyError: 'Outcome'
