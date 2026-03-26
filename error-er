@@ -1,0 +1,160 @@
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Cell In[59], line 27
+     25 for col, ax in plot_pairs:
+     26     for outcome, grp in df.groupby("Outcome"):
+---> 27         vals = grp[col].clip(upper=grp[col].quantile(0.99))
+     28         sns.kdeplot(vals, ax=ax, label=outcome, fill=True, alpha=0.35,
+     29         color=palette[outcome])
+     30         ax.set_title(col.replace("_", " "))
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\series.py:2887, in Series.quantile(self, q, interpolation)
+   2883 # We dispatch to DataFrame so that core.internals only has to worry
+   2884 #  about 2D cases.
+   2885 df = self.to_frame()
+-> 2887 result = df.quantile(q=q, interpolation=interpolation, numeric_only=False)
+   2888 if result.ndim == 2:
+   2889     result = result.iloc[:, 0]
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\frame.py:12146, in DataFrame.quantile(self, q, axis, numeric_only, interpolation, method)
+  12140 axis = self._get_axis_number(axis)
+  12142 if not is_list_like(q):
+  12143     # BlockManager.quantile expects listlike, so we wrap and unwrap here
+  12144     # error: List item 0 has incompatible type "float | ExtensionArray |
+  12145     # ndarray[Any, Any] | Index | Series | Sequence[float]"; expected "float"
+> 12146     res_df = self.quantile(
+  12147         [q],  # type: ignore[list-item]
+  12148         axis=axis,
+  12149         numeric_only=numeric_only,
+  12150         interpolation=interpolation,
+  12151         method=method,
+  12152     )
+  12153     if method == "single":
+  12154         res = res_df.iloc[0]
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\frame.py:12191, in DataFrame.quantile(self, q, axis, numeric_only, interpolation, method)
+  12187     raise ValueError(
+  12188         f"Invalid method: {method}. Method must be in {valid_method}."
+  12189     )
+  12190 if method == "single":
+> 12191     res = data._mgr.quantile(qs=q, interpolation=interpolation)
+  12192 elif method == "table":
+  12193     valid_interpolation = {"nearest", "lower", "higher"}
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\internals\managers.py:1549, in BlockManager.quantile(self, qs, interpolation)
+   1545 new_axes = list(self.axes)
+   1546 new_axes[1] = Index(qs, dtype=np.float64)
+   1548 blocks = [
+-> 1549     blk.quantile(qs=qs, interpolation=interpolation) for blk in self.blocks
+   1550 ]
+   1552 return type(self)(blocks, new_axes)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\internals\blocks.py:1891, in Block.quantile(self, qs, interpolation)
+   1888 assert self.ndim == 2
+   1889 assert is_list_like(qs)  # caller is responsible for this
+-> 1891 result = quantile_compat(self.values, np.asarray(qs._values), interpolation)
+   1892 # ensure_block_shape needed for cases where we start with EA and result
+   1893 #  is ndarray, e.g. IntegerArray, SparseArray
+   1894 result = ensure_block_shape(result, ndim=2)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\array_algos\quantile.py:39, in quantile_compat(values, qs, interpolation)
+     37     fill_value = na_value_for_dtype(values.dtype, compat=False)
+     38     mask = isna(values)
+---> 39     return quantile_with_mask(values, mask, fill_value, qs, interpolation)
+     40 else:
+     41     return values._quantile(qs, interpolation)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\array_algos\quantile.py:97, in quantile_with_mask(values, mask, fill_value, qs, interpolation)
+     95     result = np.repeat(flat, len(values)).reshape(len(values), len(qs))
+     96 else:
+---> 97     result = _nanpercentile(
+     98         values,
+     99         qs * 100.0,
+    100         na_value=fill_value,
+    101         mask=mask,
+    102         interpolation=interpolation,
+    103     )
+    105     result = np.asarray(result)
+    106     result = result.T
+
+File C:\ProgramData\anaconda3\Lib\site-packages\pandas\core\array_algos\quantile.py:218, in _nanpercentile(values, qs, na_value, mask, interpolation)
+    216     return result
+    217 else:
+--> 218     return np.percentile(
+    219         values,
+    220         qs,
+    221         axis=1,
+    222         # error: No overload variant of "percentile" matches argument types
+    223         # "ndarray[Any, Any]", "ndarray[Any, dtype[floating[_64Bit]]]",
+    224         # "int", "Dict[str, str]"  [call-overload]
+    225         method=interpolation,  # type: ignore[call-overload]
+    226     )
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:4238, in percentile(a, q, axis, out, overwrite_input, method, keepdims, weights, interpolation)
+   4235     if np.any(weights < 0):
+   4236         raise ValueError("Weights must be non-negative.")
+-> 4238 return _quantile_unchecked(
+   4239     a, q, axis, out, overwrite_input, method, keepdims, weights)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:4517, in _quantile_unchecked(a, q, axis, out, overwrite_input, method, keepdims, weights)
+   4508 def _quantile_unchecked(a,
+   4509                         q,
+   4510                         axis=None,
+   (...)
+   4514                         keepdims=False,
+   4515                         weights=None):
+   4516     """Assumes that q is in [0, 1], and is an ndarray"""
+-> 4517     return _ureduce(a,
+   4518                     func=_quantile_ureduce_func,
+   4519                     q=q,
+   4520                     weights=weights,
+   4521                     keepdims=keepdims,
+   4522                     axis=axis,
+   4523                     out=out,
+   4524                     overwrite_input=overwrite_input,
+   4525                     method=method)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:3848, in _ureduce(a, func, keepdims, **kwargs)
+   3845             index_out = (0, ) * nd
+   3846             kwargs['out'] = out[(Ellipsis, ) + index_out]
+-> 3848 r = func(a, **kwargs)
+   3850 if out is not None:
+   3851     return out
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:4694, in _quantile_ureduce_func(a, q, weights, axis, out, overwrite_input, method)
+   4692         arr = a.copy()
+   4693         wgt = weights
+-> 4694 result = _quantile(arr,
+   4695                    quantiles=q,
+   4696                    axis=axis,
+   4697                    method=method,
+   4698                    out=out,
+   4699                    weights=wgt)
+   4700 return result
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:4826, in _quantile(arr, quantiles, axis, method, out, weights)
+   4824         result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)
+   4825         gamma = gamma.reshape(result_shape)
+-> 4826         result = _lerp(previous,
+   4827                     next,
+   4828                     gamma,
+   4829                     out=out)
+   4830 else:
+   4831     # Weighted case
+   4832     # This implements method="inverted_cdf", the only supported weighted
+   4833     # method, which needs to sort anyway.
+   4834     weights = np.asanyarray(weights)
+
+File C:\ProgramData\anaconda3\Lib\site-packages\numpy\lib\_function_base_impl.py:4620, in _lerp(a, b, t, out)
+   4606 def _lerp(a, b, t, out=None):
+   4607     """
+   4608     Compute the linear interpolation weighted by gamma on each point of
+   4609     two same shape array.
+   (...)
+   4618         Output array.
+   4619     """
+-> 4620     diff_b_a = subtract(b, a)
+   4621     # asanyarray is a stop-gap until gh-13105
+   4622     lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
+
+TypeError: unsupported operand type(s) for -: 'str' and 'str'
