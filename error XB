@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+InvalidModelError                         Traceback (most recent call last)
+Cell In[71], line 33
+     31 else:
+     32     sample_size=min(1000,len(X_train_scaled))
+---> 33     explainer = shap.LinearExplainer(best_model, X_train_scaled.sample(sample_size, random_state=42))
+     34     shap_values = explainer.shap_values(Xe_shap)
+     35 if isinstance(shap_values, np.ndarray) and shap_values.ndim == 3:
+
+File C:\ProgramData\anaconda3\Lib\site-packages\shap\explainers\_linear.py:153, in LinearExplainer.__init__(self, model, masker, link, nsamples, feature_perturbation, **kwargs)
+    150 self.nsamples = nsamples
+    152 # extract what we need from the given model object
+--> 153 self.coef, self.intercept = LinearExplainer._parse_model(model)
+    155 # extract the data
+    156 if issubclass(type(self.masker), (maskers.Independent, maskers.Partition)):
+
+File C:\ProgramData\anaconda3\Lib\site-packages\shap\explainers\_linear.py:337, in LinearExplainer._parse_model(model)
+    335         intercept = model.intercept_
+    336 else:
+--> 337     raise InvalidModelError("An unknown model type was passed: " + str(type(model)))
+    339 return coef, intercept
+
+InvalidModelError: An unknown model type was passed: <class 'lightgbm.sklearn.LGBMClassifier'>
