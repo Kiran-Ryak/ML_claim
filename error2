@@ -1,0 +1,32 @@
+## 2e. Categorical domain consistency
+print("\n[2e] Categorical domain validation")
+cat_checks = {
+"MEME_SEX": ["M", "F", "U"],
+"CLCL_CL_SUB_TYPE": None,
+"LOBD_ID": None,
+"CSPD_CAT": None,
+}
+for col, allowed in cat_checks.items():
+    vals = df[col].unique().tolist()
+    if allowed:
+        bad = [v for v in vals if v not in allowed]
+        print(f" {col}: values={vals} invalid={bad}")
+    else:
+        print(f" {col}: {len(vals)} unique — {sorted(vals)}")
+        ## 2f. Financial feature distributions by outcome
+        print("\n[2f] Financial distributions by outcome")
+        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        plot_pairs = [
+        ("CDML_CHG_AMT", axes[0, 0]),
+        ("DISALL_AMT_OVR", axes[0, 1]),
+        ("Length_Of_Stay", axes[1, 0]),
+        ("CDML_UNITS", axes[1, 1]),
+        ]
+for col, ax in plot_pairs:
+    for outcome, grp in df.groupby("Outcome"):
+        vals = grp[col].clip(upper=grp[col].quantile(0.99))
+        sns.kdeplot(vals, ax=ax, label=outcome, fill=True, alpha=0.35,
+        color=palette[outcome])
+        ax.set_title(col.replace("_", " "))
+        ax.legend()
+        save_fig("04_financial_distributions.png")
